@@ -2,7 +2,7 @@
   <img src="header.jpg" alt="Agent workflows for high-quality software testing, test strategy, and test-suite reliability" width="100%">
 </div>
 
-## Better tests, not more tests
+## Write better tests, not more tests
 
 Most AI-written tests optimize for coverage. They assert implementation details, mock away the real risk, and pass even when the product breaks.
 
