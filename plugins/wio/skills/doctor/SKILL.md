@@ -10,12 +10,12 @@ metadata:
 
 Run a read-only test-suite health scan and report likely concerns with evidence. Do not edit, delete, rewrite, quarantine, or disable tests.
 
-Use [../../references/index.md](../../references/index.md) as the reference map. Start with:
+Use [references/index.md](references/index.md) as the reference map. Start with:
 
-- [Test Suite Health Diagnostics](../../references/test-suite-health-diagnostics/overview.md)
-- [Flaky Test Detection and Management](../../references/flaky-test-detection-and-management/overview.md)
-- [Test Feedback Loops](../../references/test-feedback-loops/overview.md)
-- [Test Automation Pyramid](../../references/test-automation-pyramid/overview.md)
+- [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md)
+- [Flaky Test Detection and Management](references/flaky-test-detection-and-management/overview.md)
+- [Test Feedback Loops](references/test-feedback-loops/overview.md)
+- [Test Automation Pyramid](references/test-automation-pyramid/overview.md)
 
 Load targeted references for level, oracle, doubles, data, security, performance, resilience, fuzzing, property, mutation, or regression concerns when those risks appear.
 

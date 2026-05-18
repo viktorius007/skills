@@ -10,13 +10,13 @@ metadata:
 
 Write tests only when they protect meaningful behavior. A useful test reduces future user errors, production incidents, support work, debugging time, review time, or release risk.
 
-Use [../../references/index.md](../../references/index.md) as the reference map. Load only the topic files needed for the selected behavior, especially:
+Use [references/index.md](references/index.md) as the reference map. Load only the topic files needed for the selected behavior, especially:
 
-- [Test Level Selection](../../references/test-level-selection/overview.md)
-- [Test Oracles And Assertions](../../references/test-oracles-and-assertions/overview.md)
-- [Test Data And Fixtures](../../references/test-data-and-fixtures/overview.md)
-- [Mocking And Test Doubles](../../references/mocking-and-test-doubles/overview.md)
-- [Test Feedback Loops](../../references/test-feedback-loops/overview.md)
+- [Test Level Selection](references/test-level-selection/overview.md)
+- [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md)
+- [Test Data And Fixtures](references/test-data-and-fixtures/overview.md)
+- [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md)
+- [Test Feedback Loops](references/test-feedback-loops/overview.md)
 
 ## Workflow
 

@@ -10,12 +10,12 @@ metadata:
 
 Find the best parts to test next, the right strategy for each, and the ROI of testing them. This is read-only: inspect the repo, existing tests, and references; do not edit files.
 
-Use [../../references/index.md](../../references/index.md) as the reference map. Start with:
+Use [references/index.md](references/index.md) as the reference map. Start with:
 
-- [Behavior To Test Map](../../references/behavior-to-test-map/overview.md)
-- [Risk-Based Testing](../../references/risk-based-testing/overview.md)
-- [User Behavior Testing](../../references/user-behavior-testing/overview.md)
-- [Test Level Selection](../../references/test-level-selection/overview.md)
+- [Behavior To Test Map](references/behavior-to-test-map/overview.md)
+- [Risk-Based Testing](references/risk-based-testing/overview.md)
+- [User Behavior Testing](references/user-behavior-testing/overview.md)
+- [Test Level Selection](references/test-level-selection/overview.md)
 
 Load only the additional topic files needed for the specific recommendation.
 
