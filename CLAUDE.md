@@ -32,3 +32,4 @@ This repository packages the `wio` testing workflow skill and plugin.
 - Claude Code plugins discover Markdown subagents from the plugin root `agents/` directory; project-local Claude Code discovers them from `.claude/agents/`.
 - Codex discovers TOML custom agents from `.codex/agents/`. Codex plugins do not replace that project custom-agent location.
 - Keep marketplace entries in the official host locations: `.agents/plugins/marketplace.json` for Codex and `.claude-plugin/marketplace.json` for Claude Code.
+- Keep install instructions in `README.md` explicit enough that Codex or Claude can run native marketplace/plugin commands and copy host-specific agent files without a helper script.

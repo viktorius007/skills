@@ -60,7 +60,7 @@ The repo-level marketplaces are:
 Direct skill install:
 
 ```bash
-npx skills add workersio/skills --skill wio
+npx skills add workersio/skills
 ```
 
 Claude Code plugin development:
@@ -71,10 +71,13 @@ claude --plugin-dir ./plugins/wio
 
 Claude Code marketplace install:
 
-```text
-/plugin marketplace add workersio/skills
-/plugin install wio@workersio-skills
+```bash
+claude plugin marketplace add workersio/skills
+claude plugin install wio@workersio-skills
 ```
+
+Claude plugin installs include the WIO skill, plugin hooks, and Markdown
+subagents from `plugins/wio/agents/`.
 
 Codex marketplace add:
 
@@ -88,7 +91,35 @@ For local Codex plugin testing, add this checkout as the marketplace root:
 codex plugin marketplace add .
 ```
 
-Codex custom subagents still need project config in `.codex/agents/`, because Codex custom agents are loaded from `.codex/agents/` or `~/.codex/agents/`.
+Codex plugin installs include the WIO skill and plugin hook config. Codex
+custom agents are a separate native surface: they are loaded from
+`.codex/agents/` in a project or `~/.codex/agents/` for the user.
+
+To enable WIO Codex agents globally:
+
+```bash
+mkdir -p ~/.codex/agents
+cp .codex/agents/wio-*.toml ~/.codex/agents/
+```
+
+To enable WIO Codex agents for the current project:
+
+```bash
+mkdir -p .codex/agents
+cp /path/to/wio-skills/.codex/agents/wio-*.toml .codex/agents/
+```
+
+To enable the WIO Codex hook config for the current project:
+
+```bash
+cp /path/to/wio-skills/.codex/hooks.json .codex/hooks.json
+```
+
+Verify Codex agent files:
+
+```bash
+find .codex/agents ~/.codex/agents -name 'wio-*.toml' 2>/dev/null
+```
 
 ## Commands
 
