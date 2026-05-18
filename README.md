@@ -8,34 +8,6 @@ Most AI-written tests optimize for coverage. They assert implementation details,
 
 WIO is one testing workflow skill with four commands: `$wio scan`, `$wio test`, `$wio review`, and `$wio doctor`.
 
-## Structure
-
-WIO uses one skill, command routing inside `SKILL.md`, and one shared references tree. The canonical source lives inside the plugin so plugin installs and direct skill installs do not drift:
-
-```text
-plugins/wio/
-  .codex-plugin/plugin.json
-  .claude-plugin/plugin.json
-  skills/
-    wio/
-      SKILL.md
-      scripts/
-        test-review-reminder.py
-      references/
-        index.md
-        <topic>/
-          overview.md
-          tools.md
-  agents/
-    wio-candidate-scout.md
-    wio-strategy-critic.md
-    wio-test-reviewer.md
-  hooks/
-    hooks.json
-```
-
-There are no separate `scan`, `test`, `review`, or `doctor` skills, no symlinked skill copies, and no copied reference trees.
-
 ## Install
 
 Direct skill install:
