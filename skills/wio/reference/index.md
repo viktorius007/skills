@@ -4,12 +4,13 @@ Reference selection starts with the reliability risk, not with the easiest test 
 
 ## WIO Entry Points
 
-WIO exposes one skill with three command modes:
+WIO exposes one skill with four command modes:
 
 | Command | Primary References |
 | --- | --- |
 | scan | Behavior To Test Map, Risk-Based Testing, User Behavior Testing, Test Level Selection, and the relevant topic reference for the chosen strategy. |
-| test | The reference that explains the selected strategy: testability, level selection, user behavior, doubles, oracles, data, or feedback loops. |
+| test | Full loop: candidate discovery, strategy selection, test implementation, validation, and review. Use behavior mapping, risk, level selection, oracles, data, doubles, and feedback loops. |
+| review | Test value gate: customer/developer value, oracle strength, realistic setup, feedback-loop fit, and `KEEP`, `REDO`, or `REMOVE`. |
 | doctor | Test Suite Health Diagnostics, then targeted references for level, oracle, doubles, data, flake, and feedback-loop findings. |
 
 Load only the reference files needed for the current decision.
@@ -22,6 +23,25 @@ Load only the reference files needed for the current decision.
 4. Decide the customer/business risk and fault mechanism before choosing unit, component, integration, contract, E2E, monitoring, or specialized testing.
 5. Load only the specific reference files needed for that decision; use each `tools.md` sibling for repo signals and commands.
 6. Report concise evidence, not internal exploration notes.
+
+## WIO Test Pipeline
+
+`$wio test` should not jump straight to writing code. The expected pipeline is:
+
+1. Discover a candidate with real user, production, support, release, review, or developer-flow value.
+2. Pick the strategy: test level, oracle, data/fixture setup, doubles, and feedback loop.
+3. Write one focused repo-native test.
+4. Validate with the smallest relevant command.
+5. Review the written test for value and signal.
+6. Return `KEEP`, `REDO`, or `REMOVE`.
+
+When subagents are available, use:
+
+- `skills/wio/adapters/subagents/wio-candidate-scout.md` for discovery.
+- `skills/wio/adapters/subagents/wio-strategy-critic.md` before editing.
+- `skills/wio/adapters/subagents/wio-test-reviewer.md` after validation.
+
+These subagents are process accelerators, not separate doctrine.
 
 ## Quick Selection
 

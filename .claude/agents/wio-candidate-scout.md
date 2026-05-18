@@ -1,0 +1,1 @@
+../../skills/wio/adapters/subagents/wio-candidate-scout.md
