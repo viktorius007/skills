@@ -1,6 +1,6 @@
 ---
 name: wio
-description: Testing workflow skill for scan, test, workload, review, and doctor commands. Use when asked to find high-value tests, pick a testing strategy, write focused tests, generate workloads, review test value, diagnose suite health, flaky tests, low-signal tests, or testing strategy.
+description: Testing workflow skill for finding high-value test candidates, writing focused tests, generating realistic workloads, reviewing test value, and diagnosing test-suite health. Use for prompts about what to test next, adding or improving tests, reviewing whether a test is worth keeping, low-signal or flaky tests, workload scenarios, or test-suite trust. Do not use for general QA discussion unless the user wants a concrete testing workflow or artifact.
 argument-hint: "[scan|test|workload|review|doctor] [target]"
 user-invocable: true
 metadata:
@@ -20,15 +20,29 @@ WIO is one testing workflow skill with five command modes:
 
 Commands are accessed through `$wio`:
 
-| Command | What it does | Start with |
+| Command | What it does | Default reference |
 | --- | --- | --- |
-| `$wio scan [target]` | Find the highest-value test candidates for a codebase, change, or scope. | [Behavior To Test Map](references/behavior-to-test-map/overview.md), [Risk-Based Testing](references/risk-based-testing/overview.md), [User Behavior Testing](references/user-behavior-testing/overview.md), [Test Level Selection](references/test-level-selection/overview.md) |
-| `$wio test [target]` | Run the full test workflow: discover bug-prone candidate, pick strategy, write test, validate, review, and keep only if valuable. | [Behavior To Test Map](references/behavior-to-test-map/overview.md), [Risk-Based Testing](references/risk-based-testing/overview.md), [Test Level Selection](references/test-level-selection/overview.md), [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md), [Test Data And Fixtures](references/test-data-and-fixtures/overview.md), [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md), [Test Feedback Loops](references/test-feedback-loops/overview.md) |
-| `$wio workload [target]` | Generate or implement a realistic workload with important user tasks, meaningful assertions, and controlled variance. | [Workload Modeling](references/workload-modeling/overview.md), [User Behavior Testing](references/user-behavior-testing/overview.md), [Risk-Based Testing](references/risk-based-testing/overview.md), [Test Data And Fixtures](references/test-data-and-fixtures/overview.md), [Performance, Load, and Stress Testing](references/performance-load-and-stress-testing/overview.md), [Test Feedback Loops](references/test-feedback-loops/overview.md) |
-| `$wio review [target]` | Review a test for meaningful customer or developer value and return `KEEP`, `REDO`, or `REMOVE`. | [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md), [Test Data And Fixtures](references/test-data-and-fixtures/overview.md), [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md), [Test Feedback Loops](references/test-feedback-loops/overview.md), [Mutation Testing](references/mutation-testing/overview.md) |
-| `$wio doctor [target]` | Diagnose test-suite health problems in a codebase or scope. | [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md), [Flaky Test Detection and Management](references/flaky-test-detection-and-management/overview.md), [Test Feedback Loops](references/test-feedback-loops/overview.md), [Test Automation Pyramid](references/test-automation-pyramid/overview.md) |
+| `$wio scan [target]` | Find the highest-value test candidates for a codebase, change, or scope. | [Behavior To Test Map](references/behavior-to-test-map/overview.md) |
+| `$wio test [target]` | Discover a valuable candidate, pick strategy, write one test, validate, review, and keep only if valuable. | [Test Level Selection](references/test-level-selection/overview.md) |
+| `$wio workload [target]` | Generate or implement a realistic workload with important user tasks, assertions, and controlled variance. | [Workload Modeling](references/workload-modeling/overview.md) |
+| `$wio review [target]` | Review a test for meaningful customer or developer value and return `KEEP`, `REDO`, or `REMOVE`. | [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) |
+| `$wio doctor [target]` | Diagnose test-suite health problems in a codebase or scope. | [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md) |
 
-Use [references/index.md](references/index.md) as the reference map. Load only the reference files needed for the current decision.
+Use [references/index.md](references/index.md) only when the default reference does not identify the right next reference.
+
+## Reference Loading
+
+Start with the command's default reference, then load only references triggered by the evidence:
+
+- Load [Risk-Based Testing](references/risk-based-testing/overview.md) when priorities, customer impact, security/business risk, or limited test capacity decide what comes first.
+- Load [User Behavior Testing](references/user-behavior-testing/overview.md) when the behavior is a user journey, product workflow, API consumer flow, or operator task.
+- Load [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) when the expected result, invariant, snapshot, or failure signal is unclear.
+- Load [Test Data And Fixtures](references/test-data-and-fixtures/overview.md) when state setup, seeds, factories, cleanup, permissions, or data realism affect signal.
+- Load [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md) when a mock, fake, stub, emulator, or real dependency decision could change what risk is preserved.
+- Load [Test Feedback Loops](references/test-feedback-loops/overview.md) when choosing local, PR CI, nightly, release, canary, synthetic, or production-monitoring placement.
+- Load specialized references only when the fault mechanism calls for them: property-based testing for broad deterministic input spaces, fuzzing for parsers/untrusted input, mutation testing for weak assertions, performance testing for latency/saturation, resilience testing for dependency failure, security testing for abuse or tenant/auth risk, static analysis for code/config-shape defects, and regression selection when the full suite is too slow.
+
+For commands and repo signals in a topic, load the sibling `tools.md` only after the matching `overview.md` shows that topic is relevant.
 
 ## Command Selection
 
@@ -56,9 +70,24 @@ If the user explicitly names a WIO command, follow that mode. If the command is 
 - State evidence inspected, commands run, commands not run, and residual risk.
 - Mark low-value tests `REDO` or `REMOVE`, not `KEEP`.
 
+## Gotchas
+
+- Do not write or keep tests just to increase coverage. Covered code with weak assertions is false confidence.
+- Do not mock away the boundary, state, permission, timing, data, or dependency behavior that creates the real risk.
+- Do not accept broad snapshots unless the reviewed snapshot is the protected contract and the update path is disciplined.
+- Do not use a full-suite command when a smaller command validates the changed behavior with the same signal.
+- Do not weaken assertions to fix flakes. First look for nondeterminism, shared state, timing, retries, order dependence, or external services.
+- Do not treat green CI as proof the test is valuable. The question is whether the test would fail for the meaningful regression.
+- Do not let subagents write tests or make the final value decision; the main agent owns edits and the final `KEEP`, `REDO`, or `REMOVE`.
+
+## Available Scripts
+
+- `scripts/test-review-reminder.py`: hook helper that reminds the active agent to validate and apply `$wio review` after test files change.
+- `scripts/check-wio-report.py`: optional checker for saved markdown reports. Use `python3 scripts/check-wio-report.py review report.md` when a WIO output is written to a file and you need a quick structure check.
+
 ## Subagent Workflow
 
-When the host supports subagents or parallel agents, use the WIO subagent specs from the official host locations to improve quality without duplicating guidance:
+When the host supports subagents or parallel agents and user/host policy permits them, use the WIO subagent specs from the official host locations to improve quality without duplicating guidance:
 
 - `wio-candidate-scout`: read-only discovery of high-value test candidates and real risk.
 - `wio-strategy-critic`: read-only challenge of the chosen test level, oracle, doubles, fixtures, and validation loop before implementation.
@@ -81,13 +110,7 @@ If subagents are unavailable, perform the same stages in the main agent and expl
 
 Find the best parts to test next, the right strategy for each, and the ROI of testing them. This mode is read-only: inspect the repo, existing tests, and references; do not edit files.
 
-**Start with:**
-
-- [Behavior To Test Map](references/behavior-to-test-map/overview.md)
-- [Risk-Based Testing](references/risk-based-testing/overview.md)
-- [User Behavior Testing](references/user-behavior-testing/overview.md)
-- [Test Level Selection](references/test-level-selection/overview.md)
-- [Testing References Index](references/index.md)
+**Start with:** [Behavior To Test Map](references/behavior-to-test-map/overview.md). Add [Risk-Based Testing](references/risk-based-testing/overview.md) for ranking tradeoffs and [Test Level Selection](references/test-level-selection/overview.md) only after candidates exist.
 
 **Workflow:**
 
@@ -97,26 +120,30 @@ Find the best parts to test next, the right strategy for each, and the ROI of te
 4. Identify bug-prone areas in the scope, then choose the narrowest test strategy that preserves the real user or production risk.
 5. Rank candidates by impact, likelihood, confidence gap, and cost.
 
-**Output:**
+**Output template:**
 
-- Scope and evidence inspected.
-- Ranked candidates, ideally 3-5.
-- Best next test and why it is the first investment.
-- Tempting low-value tests to avoid, if any.
-- Questions that would materially change the ranking.
+```markdown
+## Scope And Evidence
+[target, files/commands inspected, tests/CI found]
+
+## Ranked Candidates
+1. [behavior] - impact: [why it matters], risk: [fault mechanism], strategy: [level/tool], cost: [small/medium/large]
+
+## Best Next Test
+[first investment and why it beats the alternatives]
+
+## Avoid
+[coverage-padding or low-signal tests to skip]
+
+## Open Questions
+[only questions that would materially change the ranking]
+```
 
 ## test
 
 Write tests only when they protect meaningful behavior. A useful test reduces future user errors, production incidents, support work, debugging time, review time, or release risk. Do not jump straight to implementation.
 
-**Start with:**
-
-- [Test Level Selection](references/test-level-selection/overview.md)
-- [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md)
-- [Test Data And Fixtures](references/test-data-and-fixtures/overview.md)
-- [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md)
-- [Test Feedback Loops](references/test-feedback-loops/overview.md)
-- [Testing References Index](references/index.md)
+**Start with:** [Test Level Selection](references/test-level-selection/overview.md). Add [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) before writing assertions, and add data/doubles/feedback references only when those decisions affect signal.
 
 **Workflow:**
 
@@ -128,30 +155,37 @@ Write tests only when they protect meaningful behavior. A useful test reduces fu
 6. Review the test for value, signal, maintainability, and developer flow impact.
 7. Apply the value gate before finalizing: `KEEP`, `REDO`, or `REMOVE`.
 
-**Output:**
+**Output template:**
 
-- Candidate chosen and why it beat alternatives.
-- Strategy chosen and why it preserves the real risk.
-- Behavior protected.
-- Why this test is worth keeping.
-- Files changed.
-- Validation command and result, or why it was not run.
-- Verdict: `KEEP`, `REDO`, or `REMOVE`.
-- Remaining risk.
+```markdown
+## Candidate
+[behavior/failure mode chosen and why it beat alternatives]
+
+## Strategy
+[test level, oracle, data/fixtures, doubles, feedback loop, and why this preserves the real risk]
+
+## Changes
+[files changed and concise implementation summary]
+
+## Validation
+[command run and result, or why it was not run]
+
+## Review
+Verdict: KEEP | REDO | REMOVE
+Protected behavior: [...]
+Value: [...]
+Signal strengths: [...]
+False-confidence risks: [...]
+
+## Remaining Risk
+[what this test does not cover]
+```
 
 ## workload
 
 Generate or implement workloads that exercise meaningful user sessions, not one-off happy-path tests. A workload should cover important tasks a real user, API client, operator, or background process performs during a session, with controlled variance that changes data, ordering, scale, timing, or optional branches while preserving the same core task.
 
-**Start with:**
-
-- [Workload Modeling](references/workload-modeling/overview.md)
-- [User Behavior Testing](references/user-behavior-testing/overview.md)
-- [Risk-Based Testing](references/risk-based-testing/overview.md)
-- [Test Data And Fixtures](references/test-data-and-fixtures/overview.md)
-- [Performance, Load, and Stress Testing](references/performance-load-and-stress-testing/overview.md)
-- [Test Feedback Loops](references/test-feedback-loops/overview.md)
-- [Testing References Index](references/index.md)
+**Start with:** [Workload Modeling](references/workload-modeling/overview.md). Add performance, resilience, user-behavior, or data references only when the workload's risk depends on those dimensions.
 
 **Workflow:**
 
@@ -162,28 +196,38 @@ Generate or implement workloads that exercise meaningful user sessions, not one-
 5. Implement with repo-native workload, E2E, performance, or test tooling when asked to write it.
 6. Validate with the smallest safe command and report seed, coverage of interactions, limits, and residual risk.
 
-**Output:**
+**Output template:**
 
-- Workload goal and actor.
-- Interactions covered and bug-prone areas targeted.
-- Variance model, seed/replay guidance, and invariants.
-- Tool or test level chosen and why.
-- Files changed, if implemented.
-- Validation command and result, or why it was not run.
-- Remaining risk.
+```markdown
+## Workload
+Actor: [...]
+Goal: [...]
+Shape: [browser/API/CLI/job/load/synthetic/stateful]
+
+## Coverage
+Interactions: [...]
+Bug-prone areas: [...]
+Invariants/assertions: [...]
+
+## Variance And Replay
+Seed: [...]
+Variable inputs/branches/timing/scale: [...]
+Replay command or notes: [...]
+
+## Implementation And Validation
+Tooling: [...]
+Files changed: [...]
+Command/result: [...]
+
+## Limits
+[environment, data, dependency, runtime, cleanup, or flake risk]
+```
 
 ## review
 
 Review a test as a quality gate, not as a rubber stamp. The test must justify its existence through customer value, production value, support/debugging value, review value, or release confidence.
 
-**Start with:**
-
-- [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md)
-- [Test Data And Fixtures](references/test-data-and-fixtures/overview.md)
-- [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md)
-- [Test Feedback Loops](references/test-feedback-loops/overview.md)
-- [Mutation Testing](references/mutation-testing/overview.md)
-- [Testing References Index](references/index.md)
+**Start with:** [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add data, doubles, feedback-loop, or mutation references only when the test's value depends on those concerns.
 
 **Workflow:**
 
@@ -194,24 +238,32 @@ Review a test as a quality gate, not as a rubber stamp. The test must justify it
 5. Check whether the validation command is the smallest useful loop and whether CI placement is appropriate.
 6. Return `KEEP`, `REDO`, or `REMOVE` with evidence.
 
-**Output:**
+**Output template:**
 
-- Verdict: `KEEP`, `REDO`, or `REMOVE`.
-- Protected behavior and value.
-- Signal strengths.
-- Weaknesses or false-confidence risks.
-- Required changes if `REDO`, or removal reason if `REMOVE`.
+```markdown
+Verdict: KEEP | REDO | REMOVE
+
+Protected behavior:
+[what behavior or failure mode this test claims to protect]
+
+Value:
+[customer, operator, production, support, release, review, or developer-flow value]
+
+Signal strengths:
+[why it would fail for the meaningful regression]
+
+False-confidence risks:
+[weak assertions, unrealistic setup, over-mocking, snapshots, flake risk, wrong feedback loop]
+
+Required action:
+[none for KEEP; exact redesign for REDO; removal reason for REMOVE]
+```
 
 ## doctor
 
 Run a read-only test-suite health scan and report likely concerns with evidence. Do not edit, delete, rewrite, quarantine, or disable tests.
 
-**Start with:**
-
-- [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md)
-- [Flaky Test Detection and Management](references/flaky-test-detection-and-management/overview.md)
-- [Test Feedback Loops](references/test-feedback-loops/overview.md)
-- [Test Automation Pyramid](references/test-automation-pyramid/overview.md)
+**Start with:** [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md). Add flake, feedback-loop, pyramid, mutation, data, doubles, or oracle references only after the suite evidence points there.
 
 **Workflow:**
 
@@ -221,10 +273,32 @@ Run a read-only test-suite health scan and report likely concerns with evidence.
 4. Inspect CI and monitoring signals when available.
 5. Grade reliability, speed, signal, diagnostic value, maintainability, risk coverage, and monitoring.
 
-**Output:**
+**Output template:**
 
-- Scope, stack, frameworks, CI, evidence inspected, and whether tests were run.
-- Overall grade and confidence.
-- Top concerns with severity, confidence, evidence, why it matters, and suggested action.
-- Rubric scores.
-- Suite-shape gaps, bad test smells, monitoring gaps, quick wins, and material follow-up questions.
+```markdown
+## Scope And Evidence
+[stack, frameworks, CI, test commands, files inspected, tests run/not run]
+
+## Overall
+Grade: [A-F or Low/Medium/High trust]
+Confidence: [low/medium/high with reason]
+
+## Top Concerns
+1. Severity: [P0-P3]
+   Concern: [...]
+   Evidence: [...]
+   Why it matters: [...]
+   Suggested action: [...]
+
+## Rubric
+Reliability: [...]
+Speed: [...]
+Signal: [...]
+Diagnostic value: [...]
+Maintainability: [...]
+Risk coverage: [...]
+Monitoring/CI fit: [...]
+
+## Quick Wins And Questions
+[small actions and only material follow-up questions]
+```
