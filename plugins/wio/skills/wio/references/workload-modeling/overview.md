@@ -23,6 +23,7 @@ Design workloads that exercise important user sessions, API/client behavior, ope
 - Vary meaningful dimensions: roles, account age, data volume, payload shape, locale/time, optional steps, ordering, dependency responses, and think time.
 - Name the plausible bug the workload should catch and the assertion or invariant that would fail.
 - Put limits on workload dimensions. Every loop, queue, retry, generated case count, payload size, timeout, and concurrent actor count should be bounded or intentionally unbounded with an explicit assertion/stop condition.
+- Identify exclusive resources before running: fixed ports, shared databases, temp paths, lock files, queues, external accounts, buckets, and service names can make workloads unsafe to run in parallel.
 - Keep destructive or expensive workloads in safe environments with cleanup, rate limits, and explicit blast-radius controls.
 
 ## Workload Shapes
@@ -44,6 +45,7 @@ Design workloads that exercise important user sessions, API/client behavior, ope
 - Use bounded ranges and weighted choices, not arbitrary randomness.
 - Record seed and generated scenario summary on every run.
 - Persist derived structured cases, command sequences, or trace predicates when a seed alone would not replay meaningfully across code or generator changes.
+- Record environment and exclusivity assumptions needed for replay, such as ports, database paths, service addresses, credentials, and whether parallel workload runs are allowed.
 - Keep the task goal stable even when inputs and branch choices vary.
 - Include known edge classes deliberately; do not rely on randomness to discover obvious boundaries.
 - Shrink or capture failing cases into deterministic regression tests when possible.
@@ -86,7 +88,8 @@ Before proposing or keeping a workload, answer all of these:
 3. Does the workload preserve the real failure mechanism, or did mocks/setup remove it?
 4. Can the failure be replayed from a seed, generated input summary, artifact, or deterministic command?
 5. If the workload is randomized, is the replay artifact durable enough for this repo: seed only, seed plus commit, derived structured input, command sequence, or trace predicates?
-6. If the workload is high-level, what narrower regression test should capture a minimized failing case?
+6. Does the workload require exclusive local or external resources, and does the validation plan avoid collisions?
+7. If the workload is high-level, what narrower regression test should capture a minimized failing case?
 
 If the answers are vague, redesign the workload before implementation.
 
@@ -106,6 +109,7 @@ If the answers are vague, redesign the workload before implementation.
 - Define assertions and invariants before adding variance.
 - Add adversarial classes deliberately and tie each one to a risk.
 - Bound generated work, retries, queues, payload sizes, and concurrency so failures are diagnosable rather than runaway.
+- Check fixed ports, shared databases, temp files, external services, and other exclusive resources before running workloads concurrently.
 - Make failure replay deterministic.
 - Separate safety and liveness goals when faults are involved; do not let a safety-mode workload hide missing progress checks.
 - Check that at least one plausible bug would fail a named assertion or invariant.
