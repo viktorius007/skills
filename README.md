@@ -74,7 +74,7 @@ find .codex/agents ~/.codex/agents -name 'wio-*.toml' 2>/dev/null
 | --- | --- |
 | `$wio scan [target]` | Maps product behavior, existing tests, CI, and risk areas to find the highest-value tests to add next. |
 | `$wio test [target]` | Runs the full loop: discover a bug-prone candidate, pick strategy, write test, validate, review, then keep only if valuable. |
-| `$wio workload [target]` | Generates or implements realistic, replayable user-session/API/CLI/job/load workloads with controlled variance and assertions. |
+| `$wio workload [target]` | Generates or implements realistic, adversarial, replayable user-session/API/CLI/job/load workloads with controlled variance, assertions, and invariants. |
 | `$wio review [target]` | Reviews a test for customer value, developer-flow value, signal quality, maintainability, and false confidence. |
 | `$wio doctor [target]` | Audits test-suite health: weak assertions, flakes, excessive mocks, broad snapshots, slow feedback, skipped tests, and missing critical behavior coverage. |
 
@@ -142,10 +142,11 @@ A generated or recommended test should answer:
 - What user, operator, customer, or API consumer failure does this prevent?
 - What production, release, support, debugging, or review risk does it reduce?
 - Would it fail for the regression that matters?
+- What plausible bug would make it fail, and which assertion or invariant catches it?
 - Is the assertion specific enough to diagnose the broken behavior?
 - Does the setup preserve the important dependency, state, permission, timing, or data risk?
 - Does this belong in local development, PR CI, nightly, release, or production monitoring?
-- If this is a workload, is variance bounded, seeded, replayable, and checked by meaningful invariants?
+- If this is a workload, is variance bounded, seeded, replayable, adversarial in the right places, and checked by meaningful invariants?
 
 If those answers are weak, the test should be redesigned or removed.
 

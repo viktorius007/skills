@@ -10,7 +10,7 @@ WIO exposes one skill with five command modes:
 | --- | --- |
 | scan | Behavior To Test Map, Risk-Based Testing, User Behavior Testing, Test Level Selection, and the relevant topic reference for the chosen strategy. |
 | test | Full loop: bug-prone candidate discovery, strategy selection, test implementation, validation, and review. Use behavior mapping, risk, level selection, oracles, data, doubles, specialized strategies, and feedback loops. |
-| workload | Generate or implement realistic user-session, API, CLI, background-job, load, synthetic, or stateful workloads with controlled variance and replay. |
+| workload | Generate or implement realistic user-session, API, CLI, background-job, load, synthetic, or stateful workloads with adversarial edge coverage, assertions, invariants, controlled variance, and replay. |
 | review | Test value gate: customer/developer value, oracle strength, realistic setup, feedback-loop fit, and `KEEP`, `REDO`, or `REMOVE`. |
 | doctor | Test Suite Health Diagnostics, then targeted references for level, oracle, doubles, data, flake, and feedback-loop findings. |
 
@@ -63,14 +63,15 @@ These subagents are process accelerators, not separate doctrine.
 
 ## WIO Workload Pipeline
 
-`$wio workload` should produce a realistic, replayable scenario rather than a random script:
+`$wio workload` should produce a realistic, adversarial, replayable scenario rather than a random script:
 
 1. Identify the actor, session goal, and bug-prone interactions.
 2. Pick workload shape and execution loop.
-3. Define correctness invariants and failure artifacts.
-4. Add bounded variance with seed/replay details.
-5. Implement only with repo-native tooling when asked to edit.
-6. Validate safely and report limits.
+3. Define correctness assertions, invariants, and failure artifacts.
+4. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, boundary data, permission/tenant edges, timing/order changes, and dependency faults.
+5. Add bounded variance with seed/replay details.
+6. Implement only with repo-native tooling when asked to edit.
+7. Validate safely and report limits.
 
 ## Quick Selection
 
@@ -81,7 +82,7 @@ These subagents are process accelerators, not separate doctrine.
 | [Testability](./testability/overview.md) | Code is hard to exercise because dependencies, state, time, IO, or control flow are tangled. | The behavior is already easy to isolate and the question is which test layer should cover it. |
 | [Test Level Selection](./test-level-selection/overview.md) | A behavior needs a unit, component, integration, contract, E2E, or CI-only decision. | The test layer is already known and the question is how to implement the test cleanly. |
 | [User Behavior Testing](./user-behavior-testing/overview.md) | Tests should be derived from real user workflows, product risks, and failure modes. | The target is internal deterministic logic with no meaningful user-facing behavior. |
-| [Workload Modeling](./workload-modeling/overview.md) | A realistic session, traffic mix, stateful sequence, synthetic monitor, or varied workload should cover important user tasks and expose interaction bugs. | One deterministic behavior has a clear focused test and variance would reduce reproducibility. |
+| [Workload Modeling](./workload-modeling/overview.md) | A realistic session, traffic mix, stateful sequence, synthetic monitor, or varied workload should cover important user tasks, adversarial edge cases, and interaction bugs. | One deterministic behavior has a clear focused test and variance would reduce reproducibility. |
 | [Mocking And Test Doubles](./mocking-and-test-doubles/overview.md) | A test needs practical dependency substitution without losing the real risk. | Real dependencies are cheap, deterministic, and necessary to preserve the behavior under test. |
 | [Test Feedback Loops](./test-feedback-loops/overview.md) | A test needs to be placed in local development, PR CI, nightly, release, or production monitoring loops. | Runtime placement is obvious and the main problem is test design. |
 | [Test Oracles And Assertions](./test-oracles-and-assertions/overview.md) | A test needs a clear correctness oracle, assertion strategy, invariant, snapshot, or golden file. | The assertion is obvious and the main risk is environment or dependency setup. |

@@ -26,10 +26,13 @@ Given the test diff, target behavior, and validation result:
 
 1. Identify the behavior or failure mode the test claims to protect.
 2. Decide whether that behavior matters to customers, users, operators, production, support, release safety, debugging, review, or developer flow.
-3. Check whether the assertion would fail for the meaningful regression.
-4. Check whether setup, fixtures, data, and doubles preserve the real failure mechanism.
-5. Check whether the validation command is appropriate and whether the test belongs in the chosen feedback loop.
-6. Decide whether the test should be kept, redone, or removed.
+3. Check whether the assertion would fail for a named meaningful regression or plausible bug.
+4. Check whether workload or generated-test invariants are checked at the right points, including after each meaningful step when intermediate corruption matters.
+5. Check whether setup, fixtures, data, and doubles preserve the real failure mechanism.
+6. Check whether the validation command is appropriate and whether the test belongs in the chosen feedback loop.
+7. Decide whether the test should be kept, redone, or removed.
+
+Return `REDO` or `REMOVE` rather than `KEEP` when the test only proves completion, truthiness, object existence, status 200, broad snapshot equality, or mock call count, unless that weak signal is explicitly the protected contract.
 
 ## Output
 
@@ -40,5 +43,6 @@ Return only concise findings:
 - Value to customer or developer flow.
 - Signal strengths.
 - False-confidence risks.
+- Falsification check: plausible bug and assertion/invariant that would fail.
 - Required changes if `REDO`.
 - Removal reason if `REMOVE`.

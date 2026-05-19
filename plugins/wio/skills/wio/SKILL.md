@@ -14,7 +14,7 @@ WIO is one testing workflow skill with five command modes:
 
 - `scan`: find the highest-value test candidates for a codebase, change, or scope.
 - `test`: write one focused high-value test for a selected behavior, code path, or regression risk.
-- `workload`: generate a realistic workload that covers an important user session with controlled variance.
+- `workload`: generate a realistic, adversarial workload that covers an important user session with controlled variance, replay, and correctness invariants.
 - `review`: review a newly written or existing test for customer value, developer value, signal quality, and maintainability.
 - `doctor`: diagnose test-suite health problems in a codebase or scope.
 
@@ -24,7 +24,7 @@ Commands are accessed through `$wio`:
 | --- | --- | --- |
 | `$wio scan [target]` | Find the highest-value test candidates for a codebase, change, or scope. | [Behavior To Test Map](references/behavior-to-test-map/overview.md) |
 | `$wio test [target]` | Discover a valuable candidate, pick strategy, write one test, validate, review, and keep only if valuable. | [Test Level Selection](references/test-level-selection/overview.md) |
-| `$wio workload [target]` | Generate or implement a realistic workload with important user tasks, assertions, and controlled variance. | [Workload Modeling](references/workload-modeling/overview.md) |
+| `$wio workload [target]` | Generate or implement a realistic workload with important user tasks, adversarial edge cases, assertions, invariants, and controlled variance. | [Workload Modeling](references/workload-modeling/overview.md) |
 | `$wio review [target]` | Review a test for meaningful customer or developer value and return `KEEP`, `REDO`, or `REMOVE`. | [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) |
 | `$wio doctor [target]` | Diagnose test-suite health problems in a codebase or scope. | [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md) |
 
@@ -36,7 +36,7 @@ Start with the command's default reference, then load only references triggered 
 
 - Load [Risk-Based Testing](references/risk-based-testing/overview.md) when priorities, customer impact, security/business risk, or limited test capacity decide what comes first.
 - Load [User Behavior Testing](references/user-behavior-testing/overview.md) when the behavior is a user journey, product workflow, API consumer flow, or operator task.
-- Load [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) when the expected result, invariant, snapshot, or failure signal is unclear.
+- Load [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) before writing or reviewing assertions, invariants, snapshots, workload checks, or any test whose failure signal is unclear.
 - Load [Test Data And Fixtures](references/test-data-and-fixtures/overview.md) when state setup, seeds, factories, cleanup, permissions, or data realism affect signal.
 - Load [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md) when a mock, fake, stub, emulator, or real dependency decision could change what risk is preserved.
 - Load [Test Feedback Loops](references/test-feedback-loops/overview.md) when choosing local, PR CI, nightly, release, canary, synthetic, or production-monitoring placement.
@@ -64,6 +64,7 @@ If the user explicitly names a WIO command, follow that mode. If the command is 
 - Establish product, user, production, support, debugging, review, or release risk before recommending or writing tests.
 - Prefer targets where bugs usually occur: boundaries, permissions, state transitions, persistence, external dependencies, concurrency/time, validation/parsing, migrations, configuration, caching, retries/idempotency, UI workflow joins, and recent churn.
 - A test is valuable only if it would catch a meaningful regression, save developer time, improve release confidence, or expose a real operational/customer failure mode.
+- Before keeping a test or workload, name at least one plausible bug it would catch and the assertion or invariant that would fail.
 - Prefer repo-native frameworks, helpers, fixtures, commands, and naming.
 - Choose the narrowest test level that preserves the real failure mechanism.
 - Load targeted references instead of reading the whole reference library.
@@ -78,6 +79,7 @@ If the user explicitly names a WIO command, follow that mode. If the command is 
 - Do not use a full-suite command when a smaller command validates the changed behavior with the same signal.
 - Do not weaken assertions to fix flakes. First look for nondeterminism, shared state, timing, retries, order dependence, or external services.
 - Do not treat green CI as proof the test is valuable. The question is whether the test would fail for the meaningful regression.
+- Do not accept tests or workloads that only prove completion, truthiness, object existence, status 200, broad snapshot equality, or mock call counts unless that weak signal is explicitly the protected contract.
 - Do not let subagents write tests or make the final value decision; the main agent owns edits and the final `KEEP`, `REDO`, or `REMOVE`.
 
 ## Available Scripts
@@ -98,7 +100,7 @@ Subagents must read only targeted files and targeted WIO references. They return
 For `$wio test`, use this sequence:
 
 1. Discover a valuable candidate from behavior, risk, bug-prone areas, existing coverage gaps, and code evidence. Use `wio-candidate-scout` if available.
-2. Pick the strategy. Use `wio-strategy-critic` to challenge the proposed level, oracle, fixture/data setup, mocks, and validation command before editing.
+2. Pick the strategy. Use `wio-strategy-critic` to challenge the proposed level, oracle, fixture/data setup, mocks, adversarial edge coverage, and validation command before editing.
 3. Write one focused test in the main agent, using repo-native patterns.
 4. Validate with the smallest relevant command.
 5. Review the written test. Use `wio-test-reviewer` if available.
@@ -149,7 +151,7 @@ Write tests only when they protect meaningful behavior. A useful test reduces fu
 
 1. Discover the highest-value candidate in scope from product risk, bug-prone areas, code shape, existing tests, CI, and user/developer impact.
 2. Pick the right strategy from that evidence: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
-3. State the protected behavior, regression it catches, why it matters, and validation command before editing.
+3. State the protected behavior, plausible regression it catches, assertion or invariant that would fail, why it matters, and validation command before editing.
 4. Write one focused test using repo-native style and existing helpers.
 5. Validate with the smallest relevant command. If it is unsafe or unclear, state that instead of guessing.
 6. Review the test for value, signal, maintainability, and developer flow impact.
@@ -176,6 +178,7 @@ Protected behavior: [...]
 Value: [...]
 Signal strengths: [...]
 False-confidence risks: [...]
+Falsification check: [plausible bug and assertion/invariant that would fail]
 
 ## Remaining Risk
 [what this test does not cover]
@@ -183,18 +186,19 @@ False-confidence risks: [...]
 
 ## workload
 
-Generate or implement workloads that exercise meaningful user sessions, not one-off happy-path tests. A workload should cover important tasks a real user, API client, operator, or background process performs during a session, with controlled variance that changes data, ordering, scale, timing, or optional branches while preserving the same core task.
+Generate or implement workloads that exercise meaningful user sessions, not one-off happy-path tests. A workload should cover important tasks a real user, API client, operator, or background process performs during a session, with adversarial but realistic misuse and controlled variance that changes data, ordering, scale, timing, or optional branches while preserving the same core task.
 
-**Start with:** [Workload Modeling](references/workload-modeling/overview.md). Add performance, resilience, user-behavior, or data references only when the workload's risk depends on those dimensions.
+**Start with:** [Workload Modeling](references/workload-modeling/overview.md) and [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add performance, resilience, security, user-behavior, property-based, fuzzing, or data references only when the workload's risk depends on those dimensions.
 
 **Workflow:**
 
 1. Identify the user/session goal and the bug-prone interactions the workload should expose.
 2. Choose workload type: browser journey, API scenario, CLI/session script, background-job flow, load profile, synthetic monitor, or property/stateful sequence.
-3. Define stable invariants and assertions for correctness, not only completion.
-4. Add controlled variance with seeds, parameter ranges, optional branches, data shape changes, and recorded replay details.
-5. Implement with repo-native workload, E2E, performance, or test tooling when asked to write it.
-6. Validate with the smallest safe command and report seed, coverage of interactions, limits, and residual risk.
+3. Define stable invariants and assertions for correctness, not only completion, and decide which checks run after every step, at terminal state, or eventually.
+4. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, permission/tenant edges, malformed-but-valid data, boundary sizes, dependency faults, timing/order changes, and partial failure or recovery.
+5. Add controlled variance with seeds, parameter ranges, optional branches, data shape changes, and recorded replay details.
+6. Implement with repo-native workload, E2E, performance, or test tooling when asked to write it.
+7. Validate with the smallest safe command and report seed, coverage of interactions, limits, and residual risk.
 
 **Output template:**
 
@@ -209,6 +213,14 @@ Interactions: [...]
 Bug-prone areas: [...]
 Invariants/assertions: [...]
 
+## Adversarial Model
+Misuse paths: [...]
+Invalid transitions: [...]
+Boundary inputs: [...]
+Duplicate/replayed actions: [...]
+Permission/tenant edges: [...]
+Dependency/time/concurrency faults: [...]
+
 ## Variance And Replay
 Seed: [...]
 Variable inputs/branches/timing/scale: [...]
@@ -218,6 +230,11 @@ Replay command or notes: [...]
 Tooling: [...]
 Files changed: [...]
 Command/result: [...]
+
+## Falsification Check
+Plausible bug caught: [...]
+Assertion/invariant that fails: [...]
+Manual mutation or fault tried, if any: [...]
 
 ## Limits
 [environment, data, dependency, runtime, cleanup, or flake risk]
@@ -233,7 +250,7 @@ Review a test as a quality gate, not as a rubber stamp. The test must justify it
 
 1. Identify the behavior or failure mode the test claims to protect.
 2. Check whether that behavior matters to a user, operator, customer, API consumer, release, support/debugging loop, or developer workflow.
-3. Check whether the assertion would fail for the meaningful regression.
+3. Check whether the assertion would fail for the meaningful regression and identify a plausible bug that would make it fail.
 4. Check whether setup, fixtures, mocks, and data preserve the real failure mechanism.
 5. Check whether the validation command is the smallest useful loop and whether CI placement is appropriate.
 6. Return `KEEP`, `REDO`, or `REMOVE` with evidence.
@@ -254,6 +271,9 @@ Signal strengths:
 
 False-confidence risks:
 [weak assertions, unrealistic setup, over-mocking, snapshots, flake risk, wrong feedback loop]
+
+Falsification check:
+[plausible bug and assertion/invariant that would fail]
 
 Required action:
 [none for KEEP; exact redesign for REDO; removal reason for REMOVE]

@@ -25,11 +25,12 @@ Use the preloaded WIO skill and targeted WIO references only:
 Given the chosen candidate and proposed approach:
 
 1. Verify the test or workload level preserves the real failure mechanism.
-2. Verify the oracle would fail for the meaningful regression.
-3. Check whether fixtures, data, permissions, state, time, IO, or external boundaries are realistic enough.
-4. Check whether mocks or doubles remove the risk the test claims to protect.
-5. Check whether the validation command is the smallest useful loop.
-6. Flag cheaper or higher-signal alternatives.
+2. Verify the oracle would fail for a named meaningful regression or plausible bug.
+3. Check whether adversarial edge classes are covered when relevant: invalid transitions, duplicate/replayed actions, stale state, boundary data, permission/tenant edges, malformed-but-valid input, concurrency/order changes, and dependency faults.
+4. Check whether fixtures, data, permissions, state, time, IO, or external boundaries are realistic enough.
+5. Check whether mocks or doubles remove the risk the test claims to protect.
+6. Check whether the validation command is the smallest useful loop.
+7. Flag cheaper or higher-signal alternatives.
 
 ## Output
 
@@ -38,6 +39,8 @@ Return only concise findings:
 - Strategy verdict: `ACCEPT`, `REDO`, or `BLOCKED`.
 - Best test level and why.
 - Required oracle.
+- Falsification check: plausible bug and assertion/invariant that must fail.
+- Adversarial edge coverage required, if any.
 - Data/fixture/double guidance.
 - Validation command recommendation.
 - Specific risks the main agent must preserve while writing the test.
