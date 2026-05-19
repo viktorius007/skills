@@ -18,7 +18,7 @@ Use the preloaded WIO skill and targeted WIO references only:
 - `plugins/wio/skills/wio/references/mocking-and-test-doubles/overview.md`
 - `plugins/wio/skills/wio/references/test-feedback-loops/overview.md`
 - `plugins/wio/skills/wio/references/mutation-testing/overview.md`
-- Add the selected strategy reference when the test uses property, fuzz, security, performance, resilience, static, regression, or user-behavior testing.
+- Add the selected strategy reference when the test uses workload, property, fuzz, security, performance, resilience, static, regression, or user-behavior testing.
 
 ## Task
 

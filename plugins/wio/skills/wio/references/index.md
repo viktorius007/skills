@@ -4,12 +4,13 @@ Reference selection starts with the reliability risk, not with the easiest test 
 
 ## WIO Entry Points
 
-WIO exposes one skill with four command modes:
+WIO exposes one skill with five command modes:
 
 | Command | Primary References |
 | --- | --- |
 | scan | Behavior To Test Map, Risk-Based Testing, User Behavior Testing, Test Level Selection, and the relevant topic reference for the chosen strategy. |
-| test | Full loop: candidate discovery, strategy selection, test implementation, validation, and review. Use behavior mapping, risk, level selection, oracles, data, doubles, and feedback loops. |
+| test | Full loop: bug-prone candidate discovery, strategy selection, test implementation, validation, and review. Use behavior mapping, risk, level selection, oracles, data, doubles, specialized strategies, and feedback loops. |
+| workload | Generate or implement realistic user-session, API, CLI, background-job, load, synthetic, or stateful workloads with controlled variance and replay. |
 | review | Test value gate: customer/developer value, oracle strength, realistic setup, feedback-loop fit, and `KEEP`, `REDO`, or `REMOVE`. |
 | doctor | Test Suite Health Diagnostics, then targeted references for level, oracle, doubles, data, flake, and feedback-loop findings. |
 
@@ -20,16 +21,33 @@ Load only the reference files needed for the current decision.
 1. Infer product/customer context from README, docs, examples, UI copy, routes, API docs, pricing/plans, support/incident notes, and domain terms.
 2. Inventory test files, commands, framework config, CI jobs, fixtures, skips, retries, reports, and existing naming/style.
 3. Inspect the production code behind the reviewed or candidate test: public behavior, dependencies, state, side effects, data, and boundaries.
-4. Decide the customer/business risk and fault mechanism before choosing unit, component, integration, contract, E2E, monitoring, or specialized testing.
+4. List likely bug-prone areas in scope before choosing unit, component, integration, contract, E2E, workload, monitoring, or specialized testing.
 5. Load only the specific reference files needed for that decision; use each `tools.md` sibling for repo signals and commands.
 6. Report concise evidence, not internal exploration notes.
+
+## Bug-Prone Areas
+
+Use this list during `$wio scan`, `$wio test`, and `$wio workload` before picking the strategy. It is a targeting aid, not a reason to test every line.
+
+| Area | Bugs Usually Come From | Strategy Bias |
+| --- | --- | --- |
+| Public boundaries | Serialization, schema drift, validation, malformed input, version mismatch. | Contract, integration, fuzz, property, or API tests. |
+| Auth and permissions | Role matrices, tenant isolation, deny paths, token/session edge cases. | Policy matrix plus one workflow/API check. |
+| State transitions | Invalid transitions, duplicate actions, rollback, partial completion. | Unit/property state tests or integration workflow. |
+| Persistence and migrations | Transactions, constraints, indexes, query semantics, data backfills. | Integration with disposable real dependency. |
+| External dependencies | Provider errors, timeouts, retries, contract drift, sandbox mismatch. | Adapter integration, contract, resilience, or stubbed failure modes. |
+| Concurrency, time, async | Races, ordering, eventual consistency, clocks, sleeps, background jobs. | Deterministic scheduler, integration, workload, or flake-focused tests. |
+| Caching and idempotency | Stale reads, duplicate writes, retry replay, cache invalidation. | Integration or workload sequence with invariants. |
+| Configuration and rollout | Env flags, feature flags, permissions, deployment wiring, defaults. | Smoke, config/static checks, canary, or synthetic monitor. |
+| UI workflow joins | Routing, form state, accessibility, session/auth, multi-step recovery. | Component/user-behavior test plus selective E2E/workload. |
+| Recent churn or incidents | Regressions near changed code, support tickets, fragile ownership. | Narrow regression plus targeted broader fallback. |
 
 ## WIO Test Pipeline
 
 `$wio test` should not jump straight to writing code. The expected pipeline is:
 
-1. Discover a candidate with real user, production, support, release, review, or developer-flow value.
-2. Pick the strategy: test level, oracle, data/fixture setup, doubles, and feedback loop.
+1. Discover a candidate with real user, production, support, release, review, or developer-flow value in a bug-prone area.
+2. Pick the strategy from the fault mechanism: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
 3. Write one focused repo-native test.
 4. Validate with the smallest relevant command.
 5. Review the written test for value and signal.
@@ -43,6 +61,17 @@ When subagents are available, use:
 
 These subagents are process accelerators, not separate doctrine.
 
+## WIO Workload Pipeline
+
+`$wio workload` should produce a realistic, replayable scenario rather than a random script:
+
+1. Identify the actor, session goal, and bug-prone interactions.
+2. Pick workload shape and execution loop.
+3. Define correctness invariants and failure artifacts.
+4. Add bounded variance with seed/replay details.
+5. Implement only with repo-native tooling when asked to edit.
+6. Validate safely and report limits.
+
 ## Quick Selection
 
 | Reference | Use When | Look Elsewhere When |
@@ -52,6 +81,7 @@ These subagents are process accelerators, not separate doctrine.
 | [Testability](./testability/overview.md) | Code is hard to exercise because dependencies, state, time, IO, or control flow are tangled. | The behavior is already easy to isolate and the question is which test layer should cover it. |
 | [Test Level Selection](./test-level-selection/overview.md) | A behavior needs a unit, component, integration, contract, E2E, or CI-only decision. | The test layer is already known and the question is how to implement the test cleanly. |
 | [User Behavior Testing](./user-behavior-testing/overview.md) | Tests should be derived from real user workflows, product risks, and failure modes. | The target is internal deterministic logic with no meaningful user-facing behavior. |
+| [Workload Modeling](./workload-modeling/overview.md) | A realistic session, traffic mix, stateful sequence, synthetic monitor, or varied workload should cover important user tasks and expose interaction bugs. | One deterministic behavior has a clear focused test and variance would reduce reproducibility. |
 | [Mocking And Test Doubles](./mocking-and-test-doubles/overview.md) | A test needs practical dependency substitution without losing the real risk. | Real dependencies are cheap, deterministic, and necessary to preserve the behavior under test. |
 | [Test Feedback Loops](./test-feedback-loops/overview.md) | A test needs to be placed in local development, PR CI, nightly, release, or production monitoring loops. | Runtime placement is obvious and the main problem is test design. |
 | [Test Oracles And Assertions](./test-oracles-and-assertions/overview.md) | A test needs a clear correctness oracle, assertion strategy, invariant, snapshot, or golden file. | The assertion is obvious and the main risk is environment or dependency setup. |
@@ -75,18 +105,19 @@ These subagents are process accelerators, not separate doctrine.
 2. If code is hard to exercise, use [Testability](./testability/overview.md).
 3. If the question is where a test belongs, use [Test Level Selection](./test-level-selection/overview.md) and [Test Automation Pyramid](./test-automation-pyramid/overview.md).
 4. If behavior should come from user workflows, use [User Behavior Testing](./user-behavior-testing/overview.md).
-5. If dependency substitution is the decision, use [Mocking And Test Doubles](./mocking-and-test-doubles/overview.md).
-6. If the suite exists but trust is low, use [Test Suite Health Diagnostics](./test-suite-health-diagnostics/overview.md).
-7. If red CI often turns green after reruns, use [Flaky Test Detection and Management](./flaky-test-detection-and-management/overview.md).
-8. If defects are recognizable from code or config shape, use [Static Testing / Static Analysis](./static-testing-static-analysis/overview.md).
-9. If security risk extends beyond code shape, use [Security Testing Beyond SAST](./security-testing-beyond-sast/overview.md).
-10. If test capacity is constrained, use [Risk-Based Testing](./risk-based-testing/overview.md).
-11. If examples keep missing deterministic edge cases, use [Property-Based Testing](./property-based-testing/overview.md).
-12. If untrusted or structured inputs can crash, hang, corrupt, or violate invariants, use [Fuzz Testing / Continuous Fuzzing](./fuzz-testing-continuous-fuzzing/overview.md).
-13. If coverage is high but assertions feel weak, use [Mutation Testing](./mutation-testing/overview.md).
-14. If full regression is too slow, use [Regression Test Selection / Test Impact Analysis](./regression-test/overview.md).
-15. If user-visible reliability depends on traffic, latency, or saturation, use [Performance, Load, and Stress Testing](./performance-load-and-stress-testing/overview.md).
-16. If dependency or infrastructure failure is the risk, use [Resilience Testing and Fault Injection](./resilience-testing-and-fault-injection/overview.md).
+5. If a varied user session, traffic model, or operation sequence should expose interaction bugs, use [Workload Modeling](./workload-modeling/overview.md).
+6. If dependency substitution is the decision, use [Mocking And Test Doubles](./mocking-and-test-doubles/overview.md).
+7. If the suite exists but trust is low, use [Test Suite Health Diagnostics](./test-suite-health-diagnostics/overview.md).
+8. If red CI often turns green after reruns, use [Flaky Test Detection and Management](./flaky-test-detection-and-management/overview.md).
+9. If defects are recognizable from code or config shape, use [Static Testing / Static Analysis](./static-testing-static-analysis/overview.md).
+10. If security risk extends beyond code shape, use [Security Testing Beyond SAST](./security-testing-beyond-sast/overview.md).
+11. If test capacity is constrained, use [Risk-Based Testing](./risk-based-testing/overview.md).
+12. If examples keep missing deterministic edge cases, use [Property-Based Testing](./property-based-testing/overview.md).
+13. If untrusted or structured inputs can crash, hang, corrupt, or violate invariants, use [Fuzz Testing / Continuous Fuzzing](./fuzz-testing-continuous-fuzzing/overview.md).
+14. If coverage is high but assertions feel weak, use [Mutation Testing](./mutation-testing/overview.md).
+15. If full regression is too slow, use [Regression Test Selection / Test Impact Analysis](./regression-test/overview.md).
+16. If user-visible reliability depends on traffic, latency, or saturation, use [Performance, Load, and Stress Testing](./performance-load-and-stress-testing/overview.md).
+17. If dependency or infrastructure failure is the risk, use [Resilience Testing and Fault Injection](./resilience-testing-and-fault-injection/overview.md).
 
 ## Cross-Cutting Testing Judgment
 
@@ -100,4 +131,5 @@ These subagents are process accelerators, not separate doctrine.
 - Snapshot tests need a clear protected contract; unreviewed snapshot updates create low-signal approval tests.
 - Regression tests should prove that a specific failure cannot silently return.
 - Candidate selection should maximize test ROI: customer/business impact, likelihood, confidence gap, and cost to test.
+- Workloads should model real sessions with bounded, recorded variance and correctness assertions.
 - Validation reports should name commands run, commands not run, and residual risk.

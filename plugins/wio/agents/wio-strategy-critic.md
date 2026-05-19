@@ -18,13 +18,13 @@ Use the preloaded WIO skill and targeted WIO references only:
 - `plugins/wio/skills/wio/references/test-data-and-fixtures/overview.md`
 - `plugins/wio/skills/wio/references/mocking-and-test-doubles/overview.md`
 - `plugins/wio/skills/wio/references/test-feedback-loops/overview.md`
-- Add `testability`, `property-based-testing`, `fuzz-testing-continuous-fuzzing`, `security-testing-beyond-sast`, `performance-load-and-stress-testing`, or `resilience-testing-and-fault-injection` only when the risk calls for it.
+- Add `workload-modeling`, `testability`, `property-based-testing`, `fuzz-testing-continuous-fuzzing`, `security-testing-beyond-sast`, `performance-load-and-stress-testing`, or `resilience-testing-and-fault-injection` only when the risk calls for it.
 
 ## Task
 
 Given the chosen candidate and proposed approach:
 
-1. Verify the test level preserves the real failure mechanism.
+1. Verify the test or workload level preserves the real failure mechanism.
 2. Verify the oracle would fail for the meaningful regression.
 3. Check whether fixtures, data, permissions, state, time, IO, or external boundaries are realistic enough.
 4. Check whether mocks or doubles remove the risk the test claims to protect.
