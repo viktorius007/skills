@@ -14,16 +14,17 @@ WIO exposes one skill with five command modes:
 | review | Test value gate: customer/developer value, oracle strength, realistic setup, feedback-loop fit, and `KEEP`, `REDO`, or `REMOVE`. |
 | doctor | Test Suite Health Diagnostics, then targeted references for level, oracle, doubles, data, flake, and feedback-loop findings. |
 
-Load only the reference files needed for the current decision.
+Load only the reference files needed for the current decision, but do not skip references at the strategy step. The intended order is code evidence, candidate discovery, then reference-guided strategy selection.
 
 ## Exploration Order
 
 1. Infer product/customer context from README, docs, examples, UI copy, routes, API docs, pricing/plans, support/incident notes, and domain terms.
 2. Inventory test files, commands, framework config, CI jobs, fixtures, skips, retries, reports, and existing naming/style.
 3. Inspect the production code behind the reviewed or candidate test: public behavior, dependencies, state, side effects, data, and boundaries.
-4. List likely bug-prone areas in scope before choosing unit, component, integration, contract, E2E, workload, monitoring, or specialized testing.
-5. Load only the specific reference files needed for that decision; use each `tools.md` sibling for repo signals and commands.
-6. Report concise evidence, not internal exploration notes.
+4. Identify candidate behaviors or workloads and list likely bug-prone areas before choosing unit, component, integration, contract, E2E, workload, monitoring, or specialized testing.
+5. Load the specific reference files that match the selected candidate's failure mechanism; use each `tools.md` sibling for repo signals and commands when implementation or validation details matter.
+6. Choose the strategy from both code evidence and the loaded references.
+7. Report concise evidence and references used, not internal exploration notes.
 
 ## Bug-Prone Areas
 
@@ -46,12 +47,14 @@ Use this list during `$wio scan`, `$wio test`, and `$wio workload` before pickin
 
 `$wio test` should not jump straight to writing code. The expected pipeline is:
 
-1. Discover a candidate with real user, production, support, release, review, or developer-flow value in a bug-prone area.
-2. Pick the strategy from the fault mechanism: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
-3. Write one focused repo-native test.
-4. Validate with the smallest relevant command.
-5. Review the written test for value and signal.
-6. Return `KEEP`, `REDO`, or `REMOVE`.
+1. Inspect the relevant code, public behavior, existing tests, fixtures, commands, and CI shape.
+2. Discover a candidate with real user, production, support, release, review, or developer-flow value in a bug-prone area.
+3. Load the references that match the candidate's fault mechanism.
+4. Pick the strategy from code evidence plus references: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
+5. Write one focused repo-native test.
+6. Validate with the smallest relevant command.
+7. Review the written test for value and signal.
+8. Return `KEEP`, `REDO`, or `REMOVE`.
 
 When subagents are available, use:
 
@@ -65,13 +68,15 @@ These subagents are process accelerators, not separate doctrine.
 
 `$wio workload` should produce a realistic, adversarial, replayable scenario rather than a random script:
 
-1. Identify the actor, session goal, and bug-prone interactions.
-2. Pick workload shape and execution loop.
-3. Define correctness assertions, invariants, and failure artifacts.
-4. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, boundary data, permission/tenant edges, timing/order changes, and dependency faults.
-5. Add bounded variance with seed/replay details.
-6. Implement only with repo-native tooling when asked to edit.
-7. Validate safely and report limits.
+1. Inspect the code, entry points, existing tests, fixtures, commands, and any workload or E2E tooling.
+2. Identify the actor, session goal, and bug-prone interactions.
+3. Load workload, oracle, and any specialized references that match the failure mechanism.
+4. Pick workload shape and execution loop.
+5. Define correctness assertions, invariants, and failure artifacts.
+6. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, boundary data, permission/tenant edges, timing/order changes, and dependency faults.
+7. Add bounded variance with seed/replay details.
+8. Implement only with repo-native tooling when asked to edit.
+9. Validate safely and report limits.
 
 ## Quick Selection
 

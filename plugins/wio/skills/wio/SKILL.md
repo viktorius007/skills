@@ -28,21 +28,24 @@ Commands are accessed through `$wio`:
 | `$wio review [target]` | Review a test for meaningful customer or developer value and return `KEEP`, `REDO`, or `REMOVE`. | [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) |
 | `$wio doctor [target]` | Diagnose test-suite health problems in a codebase or scope. | [Test Suite Health Diagnostics](references/test-suite-health-diagnostics/overview.md) |
 
-Use [references/index.md](references/index.md) only when the default reference does not identify the right next reference.
+Use [references/index.md](references/index.md) to route from code evidence and candidate failure modes to the right strategy references.
 
 ## Reference Loading
 
-Start with the command's default reference, then load only references triggered by the evidence:
+Do not pick a test strategy from memory or from the nearest existing test alone. First inspect the target code, public behavior, existing tests, fixtures, and test commands. Then identify candidate behaviors or workloads and their likely failure mechanisms. Only after candidates exist, load the references needed to choose the strategy.
+
+For every selected candidate, load at least one strategy reference that matches the failure mechanism before recommending or writing a test:
 
 - Load [Risk-Based Testing](references/risk-based-testing/overview.md) when priorities, customer impact, security/business risk, or limited test capacity decide what comes first.
 - Load [User Behavior Testing](references/user-behavior-testing/overview.md) when the behavior is a user journey, product workflow, API consumer flow, or operator task.
+- Load [Test Level Selection](references/test-level-selection/overview.md) before choosing unit, component, integration, contract, E2E, workload, synthetic, or monitoring coverage.
 - Load [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) before writing or reviewing assertions, invariants, snapshots, workload checks, or any test whose failure signal is unclear.
 - Load [Test Data And Fixtures](references/test-data-and-fixtures/overview.md) when state setup, seeds, factories, cleanup, permissions, or data realism affect signal.
 - Load [Mocking And Test Doubles](references/mocking-and-test-doubles/overview.md) when a mock, fake, stub, emulator, or real dependency decision could change what risk is preserved.
 - Load [Test Feedback Loops](references/test-feedback-loops/overview.md) when choosing local, PR CI, nightly, release, canary, synthetic, or production-monitoring placement.
 - Load specialized references only when the fault mechanism calls for them: property-based testing for broad deterministic input spaces, fuzzing for parsers/untrusted input, mutation testing for weak assertions, performance testing for latency/saturation, resilience testing for dependency failure, security testing for abuse or tenant/auth risk, static analysis for code/config-shape defects, and regression selection when the full suite is too slow.
 
-For commands and repo signals in a topic, load the sibling `tools.md` only after the matching `overview.md` shows that topic is relevant.
+For commands and repo signals in a topic, load the sibling `tools.md` after the matching `overview.md` shows that topic is relevant. State which reference files informed the chosen strategy.
 
 ## Command Selection
 
@@ -69,7 +72,7 @@ If the user explicitly names a WIO command, follow that mode. If the command is 
 - Prefer assertions and invariants that encode the mental model of the behavior, including valid cases, invalid cases, and boundary transitions between them.
 - Prefer repo-native frameworks, helpers, fixtures, commands, and naming.
 - Choose the narrowest test level that preserves the real failure mechanism.
-- Load targeted references instead of reading the whole reference library.
+- Read code and tests before choosing strategy; load targeted references after candidate failure modes are known.
 - State evidence inspected, commands run, commands not run, and residual risk.
 - Mark low-value tests `REDO` or `REMOVE`, not `KEEP`.
 
@@ -97,32 +100,36 @@ When the host supports subagents or parallel agents and user/host policy permits
 - `wio-strategy-critic`: read-only challenge of the chosen test level, oracle, doubles, fixtures, and validation loop before implementation.
 - `wio-test-reviewer`: post-implementation review that returns `KEEP`, `REDO`, or `REMOVE`.
 
-Subagents must read only targeted files and targeted WIO references. They return findings to the main agent; they do not write reports or copy reference content. Claude plugin subagents live in `plugins/wio/agents/`; Claude project subagents can live in `.claude/agents/`; Codex custom agents live in `.codex/agents/`. Installing WIO with `skills add` does not create those runtime files.
+Subagents must inspect targeted code and tests before loading targeted WIO references. They return findings to the main agent; they do not write reports or copy reference content. Claude plugin subagents live in `plugins/wio/agents/`; Claude project subagents can live in `.claude/agents/`; Codex custom agents live in `.codex/agents/`. Installing WIO with `skills add` does not create those runtime files.
 
 For `$wio test`, use this sequence:
 
-1. Discover a valuable candidate from behavior, risk, bug-prone areas, existing coverage gaps, and code evidence. Use `wio-candidate-scout` if available.
-2. Pick the strategy. Use `wio-strategy-critic` to challenge the proposed level, oracle, fixture/data setup, mocks, adversarial edge coverage, and validation command before editing.
-3. Write one focused test in the main agent, using repo-native patterns.
-4. Validate with the smallest relevant command.
-5. Review the written test. Use `wio-test-reviewer` if available.
-6. Keep the test only if review returns `KEEP`; otherwise revise (`REDO`) or remove (`REMOVE`).
+1. Inspect the repo and target code: public behavior, changed paths, existing tests, fixtures, commands, dependencies, state, side effects, and boundaries.
+2. Discover valuable candidates from behavior, risk, bug-prone areas, existing coverage gaps, and code evidence. Use `wio-candidate-scout` if available.
+3. Load the references that match the selected candidate's failure mechanism, then pick the strategy: test level, oracle, fixture/data setup, doubles, adversarial edge coverage, and validation command.
+4. Use `wio-strategy-critic` to challenge the proposed strategy before editing when available.
+5. Write one focused test in the main agent, using repo-native patterns.
+6. Validate with the smallest relevant command.
+7. Review the written test. Use `wio-test-reviewer` if available.
+8. Keep the test only if review returns `KEEP`; otherwise revise (`REDO`) or remove (`REMOVE`).
 
 If subagents are unavailable, perform the same stages in the main agent and explicitly label the review stage.
 
 ## scan
 
-Find the best parts to test next, the right strategy for each, and the ROI of testing them. This mode is read-only: inspect the repo, existing tests, and references; do not edit files.
+Find the best parts to test next, the right strategy for each, and the ROI of testing them. This mode is read-only: inspect the repo and existing tests before loading strategy references; do not edit files.
 
-**Start with:** [Behavior To Test Map](references/behavior-to-test-map/overview.md). Add [Risk-Based Testing](references/risk-based-testing/overview.md) for ranking tradeoffs and [Test Level Selection](references/test-level-selection/overview.md) only after candidates exist.
+**Start with code evidence:** inspect product surfaces, target implementation, existing tests, fixtures, and commands. Then use [Behavior To Test Map](references/behavior-to-test-map/overview.md) to organize candidates, [Risk-Based Testing](references/risk-based-testing/overview.md) for ranking tradeoffs, and [Test Level Selection](references/test-level-selection/overview.md) only after candidates exist.
 
 **Workflow:**
 
 1. Establish product/customer context from repo evidence.
 2. Inventory existing test frameworks, commands, fixtures, CI, and test layers.
-3. Map high-value behavior before low-level helpers.
-4. Identify bug-prone areas in the scope, then choose the narrowest test strategy that preserves the real user or production risk.
-5. Rank candidates by impact, likelihood, confidence gap, and cost.
+3. Inspect target implementation and nearby tests before choosing a strategy.
+4. Map high-value behavior before low-level helpers.
+5. Identify bug-prone areas in the scope.
+6. Load the references that match each candidate's failure mechanism, then choose the narrowest strategy that preserves the real user or production risk.
+7. Rank candidates by impact, likelihood, confidence gap, and cost.
 
 **Output template:**
 
@@ -131,7 +138,7 @@ Find the best parts to test next, the right strategy for each, and the ROI of te
 [target, files/commands inspected, tests/CI found]
 
 ## Ranked Candidates
-1. [behavior] - impact: [why it matters], risk: [fault mechanism], strategy: [level/tool], cost: [small/medium/large]
+1. [behavior] - impact: [why it matters], risk: [fault mechanism], references: [files used], strategy: [level/tool], cost: [small/medium/large]
 
 ## Best Next Test
 [first investment and why it beats the alternatives]
@@ -145,19 +152,21 @@ Find the best parts to test next, the right strategy for each, and the ROI of te
 
 ## test
 
-Write tests only when they protect meaningful behavior. A useful test reduces future user errors, production incidents, support work, debugging time, review time, or release risk. Do not jump straight to implementation.
+Write tests only when they protect meaningful behavior. A useful test reduces future user errors, production incidents, support work, debugging time, review time, or release risk. Do not jump straight to implementation or strategy selection.
 
-**Start with:** [Test Level Selection](references/test-level-selection/overview.md). Add [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) before writing assertions, and add data/doubles/feedback references only when those decisions affect signal.
+**Start with code evidence:** inspect the target behavior, implementation, existing tests, fixtures, and commands. After selecting a candidate, load [Test Level Selection](references/test-level-selection/overview.md) before choosing the test layer and [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md) before writing assertions. Add data, doubles, feedback, or specialized references when those decisions affect signal.
 
 **Workflow:**
 
-1. Discover the highest-value candidate in scope from product risk, bug-prone areas, code shape, existing tests, CI, and user/developer impact.
-2. Pick the right strategy from that evidence: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
-3. State the protected behavior, plausible regression it catches, assertion or invariant that would fail, why it matters, and validation command before editing.
-4. Write one focused test using repo-native style and existing helpers.
-5. Validate with the smallest relevant command. If it is unsafe or unclear, state that instead of guessing.
-6. Review the test for value, signal, maintainability, and developer flow impact.
-7. Apply the value gate before finalizing: `KEEP`, `REDO`, or `REMOVE`.
+1. Inspect code, public behavior, existing tests, fixtures, CI, and test commands in the target scope.
+2. Discover the highest-value candidate in scope from product risk, bug-prone areas, code shape, existing coverage gaps, and user/developer impact.
+3. Load the right strategy references for that candidate's failure mechanism.
+4. Pick the strategy from code evidence plus references: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
+5. State the protected behavior, plausible regression it catches, assertion or invariant that would fail, why it matters, references used, and validation command before editing.
+6. Write one focused test using repo-native style and existing helpers.
+7. Validate with the smallest relevant command. If it is unsafe or unclear, state that instead of guessing.
+8. Review the test for value, signal, maintainability, and developer flow impact.
+9. Apply the value gate before finalizing: `KEEP`, `REDO`, or `REMOVE`.
 
 **Output template:**
 
@@ -166,7 +175,7 @@ Write tests only when they protect meaningful behavior. A useful test reduces fu
 [behavior/failure mode chosen and why it beat alternatives]
 
 ## Strategy
-[test level, oracle, data/fixtures, doubles, feedback loop, and why this preserves the real risk]
+[test level, oracle, data/fixtures, doubles, feedback loop, references used, and why this preserves the real risk]
 
 ## Changes
 [files changed and concise implementation summary]
@@ -190,17 +199,19 @@ Falsification check: [plausible bug and assertion/invariant that would fail]
 
 Generate or implement workloads that exercise meaningful user sessions, not one-off happy-path tests. A workload should cover important tasks a real user, API client, operator, or background process performs during a session, with adversarial but realistic misuse and controlled variance that changes data, ordering, scale, timing, or optional branches while preserving the same core task.
 
-**Start with:** [Workload Modeling](references/workload-modeling/overview.md) and [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add performance, resilience, security, user-behavior, property-based, fuzzing, or data references only when the workload's risk depends on those dimensions.
+**Start with code evidence:** inspect the user/session entry points, implementation, existing tests, fixtures, commands, and workload/E2E tooling. After identifying the actor, goal, and bug-prone interactions, load [Workload Modeling](references/workload-modeling/overview.md) and [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add performance, resilience, security, user-behavior, property-based, fuzzing, or data references only when the workload's risk depends on those dimensions.
 
 **Workflow:**
 
-1. Identify the user/session goal and the bug-prone interactions the workload should expose.
-2. Choose workload type: browser journey, API scenario, CLI/session script, background-job flow, load profile, synthetic monitor, or property/stateful sequence.
-3. Define stable invariants and assertions for correctness, not only completion, and decide which checks run after every step, at terminal state, or eventually.
-4. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, permission/tenant edges, malformed-but-valid data, boundary sizes, dependency faults, timing/order changes, partial failure or recovery, and explicit error-handling paths.
-5. Add controlled variance with seeds, parameter ranges, optional branches, data shape changes, and recorded replay details.
-6. Implement with repo-native workload, E2E, performance, or test tooling when asked to write it.
-7. Validate with the smallest safe command and report seed, coverage of interactions, limits, and residual risk.
+1. Inspect user/session entry points, implementation, existing tests, fixtures, commands, and workload/E2E tooling.
+2. Identify the user/session goal and the bug-prone interactions the workload should expose.
+3. Load the references that match the workload's failure mechanism.
+4. Choose workload type: browser journey, API scenario, CLI/session script, background-job flow, load profile, synthetic monitor, or property/stateful sequence.
+5. Define stable invariants and assertions for correctness, not only completion, and decide which checks run after every step, at terminal state, or eventually.
+6. Add adversarial classes deliberately: invalid transitions, duplicate/replayed actions, stale state, permission/tenant edges, malformed-but-valid data, boundary sizes, dependency faults, timing/order changes, partial failure or recovery, and explicit error-handling paths.
+7. Add controlled variance with seeds, parameter ranges, optional branches, data shape changes, and recorded replay details.
+8. Implement with repo-native workload, E2E, performance, or test tooling when asked to write it.
+9. Validate with the smallest safe command and report seed, coverage of interactions, limits, and residual risk.
 
 **Output template:**
 
@@ -209,6 +220,7 @@ Generate or implement workloads that exercise meaningful user sessions, not one-
 Actor: [...]
 Goal: [...]
 Shape: [browser/API/CLI/job/load/synthetic/stateful]
+References used: [...]
 
 ## Coverage
 Interactions: [...]
@@ -246,16 +258,18 @@ Manual mutation or fault tried, if any: [...]
 
 Review a test as a quality gate, not as a rubber stamp. The test must justify its existence through customer value, production value, support/debugging value, review value, or release confidence.
 
-**Start with:** [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add data, doubles, feedback-loop, or mutation references only when the test's value depends on those concerns.
+**Start with code evidence:** inspect the test diff and protected production behavior. Then load [Test Oracles And Assertions](references/test-oracles-and-assertions/overview.md). Add data, doubles, feedback-loop, or mutation references only when the test's value depends on those concerns.
 
 **Workflow:**
 
-1. Identify the behavior or failure mode the test claims to protect.
-2. Check whether that behavior matters to a user, operator, customer, API consumer, release, support/debugging loop, or developer workflow.
-3. Check whether the assertion would fail for the meaningful regression and identify a plausible bug that would make it fail.
-4. Check whether setup, fixtures, mocks, and data preserve the real failure mechanism.
-5. Check whether the validation command is the smallest useful loop and whether CI placement is appropriate.
-6. Return `KEEP`, `REDO`, or `REMOVE` with evidence.
+1. Inspect the test diff and protected production behavior.
+2. Identify the behavior or failure mode the test claims to protect.
+3. Load the references needed to judge the test's strategy, oracle, setup, doubles, and feedback loop.
+4. Check whether that behavior matters to a user, operator, customer, API consumer, release, support/debugging loop, or developer workflow.
+5. Check whether the assertion would fail for the meaningful regression and identify a plausible bug that would make it fail.
+6. Check whether setup, fixtures, mocks, and data preserve the real failure mechanism.
+7. Check whether the validation command is the smallest useful loop and whether CI placement is appropriate.
+8. Return `KEEP`, `REDO`, or `REMOVE` with evidence.
 
 **Output template:**
 
@@ -273,6 +287,9 @@ Signal strengths:
 
 False-confidence risks:
 [weak assertions, unrealistic setup, over-mocking, snapshots, flake risk, wrong feedback loop]
+
+References used:
+[files that informed the decision]
 
 Falsification check:
 [plausible bug and assertion/invariant that would fail]

@@ -11,7 +11,7 @@ skills:
 
 You discover test candidates that are worth a real engineering investment. You are read-only: do not edit files.
 
-Use the preloaded WIO skill and targeted WIO references only:
+Inspect code, existing tests, fixtures, and commands before recommending candidates. Use the preloaded WIO skill and targeted WIO references after code evidence identifies likely failure mechanisms:
 
 - `plugins/wio/skills/wio/references/behavior-to-test-map/overview.md`
 - `plugins/wio/skills/wio/references/risk-based-testing/overview.md`
@@ -27,8 +27,9 @@ Given the target scope from the main agent:
 1. Infer user, customer, operator, production, support, release, or developer-flow risk.
 2. Inspect public surfaces, changed code, existing tests, fixtures, and CI/test commands.
 3. Identify candidate behaviors or workloads where validation would reduce meaningful risk.
-4. Reject low-value coverage padding.
-5. Rank candidates by impact, likelihood, confidence gap, and cost.
+4. Load references that match the candidate failure mechanisms before suggesting test strategies.
+5. Reject low-value coverage padding.
+6. Rank candidates by impact, likelihood, confidence gap, and cost.
 
 ## Output
 
@@ -38,5 +39,6 @@ Return only concise findings:
 - Best first candidate and why it should be tested first.
 - Existing coverage or missing coverage evidence.
 - Suggested test level for each candidate.
+- References used to choose or reject each strategy.
 - Low-value tests to avoid.
 - Files and commands inspected.
