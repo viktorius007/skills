@@ -74,13 +74,15 @@ If the user explicitly names a WIO command, follow that mode. If the command is 
 - Prefer assertions and invariants that encode the mental model of the behavior, including valid cases, invalid cases, and boundary transitions between them.
 - Prefer repo-native frameworks, helpers, fixtures, commands, and naming.
 - Choose the narrowest test level that preserves the real failure mechanism.
-- Read code and tests before choosing strategy; load targeted references after candidate failure modes are known.
-- State evidence inspected, commands run, commands not run, and residual risk.
-- Mark low-value tests `REDO` or `REMOVE`, not `KEEP`.
+- Read code AND grep the test suite per candidate before choosing strategy; load targeted references after candidate failure modes are known. Production-code inspection alone never proves a gap.
+- State gap evidence (search patterns + nearest existing test file:line), risk evidence (named audience + failure mode), commands run, commands not run, and residual risk. Bare "evidence inspected" is invalid output.
+- Mark low-value tests `REDO` or `REMOVE`, not `KEEP`. A test whose protected behavior cannot be named concretely is `REMOVE`.
 
 ## Gotchas
 
 - Do not write or keep tests just to increase coverage. Covered code with weak assertions is false confidence.
+- Do not propose a candidate or accept a "missing coverage" claim based solely on production-code inspection. Grep the test suite for the failure mode by entity + state + verb + failure-mode keywords before declaring a gap — existing tests often live in differently-named files (e.g. `e2e_<topic>.rs`, `<module>_efficacy.rs`) or under non-obvious names. A candidate without an explicit grep-backed gap-proof is invalid output.
+- Do not propose a test for a hazard that depends on a future caller constructing an unsafe state. Trace every current callsite first — if no caller can reach the state today, the candidate is `structural-not-regression` and excluded unless the user explicitly asked for forward-looking hazards.
 - Do not mock away the boundary, state, permission, timing, data, or dependency behavior that creates the real risk.
 - Do not accept broad snapshots unless the reviewed snapshot is the protected contract and the update path is disciplined.
 - Do not use a full-suite command when a smaller command validates the changed behavior with the same signal.
@@ -131,26 +133,36 @@ Find the best parts to test next, the right strategy for each, and the ROI of te
 3. Inspect target implementation and nearby tests before choosing a strategy.
 4. Map high-value behavior before low-level helpers.
 5. Identify bug-prone areas in the scope.
-6. Load the references that match each candidate's failure mechanism, then choose the narrowest strategy that preserves the real user or production risk.
-7. Rank candidates by impact, likelihood, confidence gap, and cost.
+6. Gap-proof every candidate before listing it. Grep the inventoried test suite for tests of comparable scope using the candidate's entity + state + verb + failure-mode keywords. A candidate that "looks uncovered" in production code is not a gap until proven absent in tests — existing tests often live in differently-named files (e.g. `e2e_<topic>.rs`, `<module>_efficacy.rs`) or under non-obvious names. Cite the nearest existing test (file:line) and the explicit difference that leaves this case uncovered. Drop candidates whose gap-proof fails. Classify candidates whose hazard depends on a future caller as `structural-not-regression` and exclude unless forward-looking hazards were explicitly requested.
+7. Load the references that match each candidate's failure mechanism, then choose the narrowest strategy that preserves the real user or production risk.
+8. Rank candidates by impact, likelihood, confidence gap, and cost.
 
 **Output template:**
 
 ```markdown
 ## Scope And Evidence
-[target, files/commands inspected, tests/CI found]
+target: [...]
+files/commands inspected: [...]
+tests/CI inventoried (with paths + naming conventions): [...]
+grep invocations run for gap-proofing (verbatim): [...]
 
 ## Ranked Candidates
-1. [behavior] - impact: [why it matters], risk: [fault mechanism], references: [files used], strategy: [level/tool], cost: [small/medium/large]
+1. [behavior]
+   - impact: [named audience + named failure mode]
+   - risk: [fault mechanism]
+   - gap evidence: [search patterns; nearest existing test file:line; explicit difference]
+   - references cited: [file path → decision informed]
+   - strategy: [level/tool; failure-mechanism reason it cannot move narrower]
+   - cost: [small/medium/large with hours estimate]
 
 ## Best Next Test
-[first investment and why it beats the alternatives]
+[first investment; the named regression it catches; the assertion/invariant that would fail; why it beats the alternatives]
 
 ## Avoid
-[coverage-padding or low-signal tests to skip]
+[coverage-padding or low-signal tests, each named with the reason]
 
 ## Open Questions
-[only questions that would materially change the ranking]
+[only questions whose answers would materially change the ranking]
 ```
 
 ## test
@@ -163,39 +175,50 @@ Write tests only when they protect meaningful behavior. A useful test reduces fu
 
 1. Inspect code, public behavior, existing tests, fixtures, CI, and test commands in the target scope.
 2. Discover the highest-value candidate in scope from product risk, bug-prone areas, code shape, existing coverage gaps, and user/developer impact.
-3. Load the right strategy references for that candidate's failure mechanism.
-4. Pick the strategy from code evidence plus references: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
-5. State the protected behavior, plausible regression it catches, assertion or invariant that would fail, why it matters, references used, and validation command before editing.
-6. Write one focused test using repo-native style and existing helpers.
-7. Validate with the smallest relevant command. If it is unsafe or unclear, state that instead of guessing.
-8. Review the test for value, signal, maintainability, and developer flow impact.
-9. Apply the value gate before finalizing: `KEEP`, `REDO`, or `REMOVE`.
+3. Gap-proof the selected candidate. Grep the test suite for tests of comparable scope using entity + state + verb + failure-mode keywords; if a test already protects the failure mechanism with comparable oracle quality, halt and report the existing test rather than writing a duplicate. Production-code inspection alone never proves a gap.
+4. Load the right strategy references for that candidate's failure mechanism.
+5. Pick the strategy from code evidence plus references: test level, oracle, data/fixture setup, doubles, specialized approach, and feedback loop.
+6. State the protected behavior, plausible regression it catches, assertion or invariant that would fail, why it matters, references used, and validation command before editing.
+7. Write one focused test using repo-native style and existing helpers.
+8. Validate with the smallest relevant command. If it is unsafe or unclear, state that instead of guessing.
+9. Review the test for value, signal, maintainability, and developer flow impact.
+10. Apply the value gate before finalizing: `KEEP`, `REDO`, or `REMOVE`.
 
 **Output template:**
 
 ```markdown
 ## Candidate
-[behavior/failure mode chosen and why it beat alternatives]
+behavior/failure mode chosen: [...]
+gap evidence: [search patterns run; nearest existing test file:line; explicit difference]
+why it beat alternatives: [...]
 
 ## Strategy
-[test level, oracle, data/fixtures, doubles, feedback loop, references used, and why this preserves the real risk]
+test level: [...] (failure-mechanism reason it cannot move narrower)
+oracle: [assertion or invariant text]
+data/fixtures: [...] (the failure mode each preserves)
+doubles: [...] (each named, with the failure mode preserved)
+feedback loop: [local/PR/nightly/release/canary/synthetic]
+references cited: [file path → decision informed]
 
 ## Changes
-[files changed and concise implementation summary]
+files changed: [...]
+implementation summary: [...]
 
 ## Validation
-[command run and result, or why it was not run]
+command run (verbatim): [...]
+result: [...]
+(or: command not run; reason: [...])
 
 ## Review
 Verdict: KEEP | REDO | REMOVE
-Protected behavior: [...]
-Value: [...]
-Signal strengths: [...]
-False-confidence risks: [...]
-Falsification check: [plausible bug and assertion/invariant that would fail]
+Protected behavior: [named concretely]
+Audience and failure cost: [...]
+Signal strengths: [each tied to the failure mechanism it catches]
+False-confidence risks: [each named individually]
+Falsification check: [named regression; assertion/invariant that would fail]
 
 ## Remaining Risk
-[what this test does not cover]
+[failure modes this test does not cover, named individually]
 ```
 
 ## workload
@@ -224,48 +247,49 @@ Generate workloads that exercise meaningful user sessions, not one-off happy-pat
 
 ```markdown
 ## Workload
-Actor: [...]
-Goal: [...]
+Actor: [named, with system role]
+Goal: [named user/operator task]
 Shape: [browser/API/CLI/job/load/synthetic/stateful]
-References used: [...]
+References cited: [file path → decision informed]
 
 ## Existing Coverage
-Existing workloads found: [...]
-What they cover: [...]
-Gap this workload fills: [...]
-Why this is not only a wrapper/runner/seed sweep: [...]
+Existing workloads found (file:line): [...]
+What they cover: [named failure modes]
+Gap this workload fills: [named failure mode not covered by any existing workload]
+Why this is not only a wrapper/runner/seed sweep: [the new failure surface / adversarial class / oracle / state model / dependency fault / user path / data shape / timing dimension / replay artifact this introduces]
 
 ## Coverage
-Interactions: [...]
-Bug-prone areas: [...]
-New failure surface/adversarial class/oracle: [...]
-Invariants/assertions: [...]
+Interactions: [named, each tied to a code path]
+Bug-prone areas: [named]
+New failure surface/adversarial class/oracle: [named]
+Invariants/assertions: [each as text, with the failure mode it catches]
 
 ## Adversarial Model
-Misuse paths: [...]
-Invalid transitions: [...]
-Boundary inputs: [...]
-Duplicate/replayed actions: [...]
-Permission/tenant edges: [...]
-Dependency/time/concurrency faults: [...]
+Misuse paths: [each named]
+Invalid transitions: [each named]
+Boundary inputs: [each named with the boundary]
+Duplicate/replayed actions: [each named]
+Permission/tenant edges: [each named]
+Dependency/time/concurrency faults: [each named with the fault injection method]
 
 ## Variance And Replay
-Seed: [...]
-Variable inputs/branches/timing/scale: [...]
-Replay command or notes: [...]
+Seed: [value]
+Variable inputs/branches/timing/scale: [each named with the range]
+Replay command (verbatim, copy-pasteable): [...]
 
 ## Implementation And Validation
-Tooling: [...]
+Tooling: [named libraries/helpers]
 Files changed: [...]
-Command/result: [...]
+Validation command (verbatim): [...]
+Result: [pass/fail with output excerpt]
 
 ## Falsification Check
-Plausible bug caught: [...]
-Assertion/invariant that fails: [...]
-Manual mutation or fault tried, if any: [...]
+Named regression: [the bug this workload would catch]
+Assertion/invariant that fails under it: [exact text]
+Manual mutation or fault tried (if any): [named with result]
 
 ## Limits
-[environment, data, dependency, runtime, cleanup, or flake risk]
+[environment, data, dependency, runtime, cleanup, or flake risks — each named individually]
 ```
 
 ## review
@@ -277,39 +301,45 @@ Review a test as a quality gate, not as a rubber stamp. The test must justify it
 **Workflow:**
 
 1. Inspect the test diff and protected production behavior.
-2. Identify the behavior or failure mode the test claims to protect.
-3. Load the references needed to judge the test's strategy, oracle, setup, doubles, and feedback loop.
-4. Check whether that behavior matters to a user, operator, customer, API consumer, release, support/debugging loop, or developer workflow.
-5. Check whether the assertion would fail for the meaningful regression and identify a plausible bug that would make it fail.
-6. Check whether setup, fixtures, mocks, and data preserve the real failure mechanism.
-7. Check whether the validation command is the smallest useful loop and whether CI placement is appropriate.
-8. Return `KEEP`, `REDO`, or `REMOVE` with evidence.
+2. Name the behavior or failure mode the test claims to protect. Generic descriptions are invalid; if you cannot name it concretely, return `REMOVE`.
+3. Check for prior coverage. Grep the test suite for tests of comparable scope to the protected behavior using entity + state + verb + failure-mode keywords. If an existing test already protects the same failure mechanism with comparable oracle quality, return `REMOVE` (duplicate) regardless of standalone value — duplicate coverage is suite bloat, not signal. Cite the subsuming test by file:line and the assertions it overlaps.
+4. Load the references needed to judge the test's strategy, oracle, setup, doubles, and feedback loop.
+5. Name the audience the behavior matters to (customer, user, operator, API consumer, release, support/debugging, developer workflow) and the failure cost. A test whose audience cannot be named is suite bloat — return `REMOVE`.
+6. Name a plausible regression and verify the assertion would fail under it. If you cannot construct a falsifying mutation, return `REDO`.
+7. Verify setup, fixtures, mocks, and data preserve the real failure mechanism. Name any abstraction that removes the failure mode and return `REDO`.
+8. Verify the validation command is the smallest one that exercises the failure mechanism, and that CI placement matches the chosen feedback loop. Name a smaller command or a different loop if either applies, and return `REDO`.
+9. Issue the verdict: `KEEP`, `REDO`, or `REMOVE`. `REDO` and `REMOVE` must name the failing step and the concrete change required.
 
 **Output template:**
 
 ```markdown
 Verdict: KEEP | REDO | REMOVE
 
-Protected behavior:
-[what behavior or failure mode this test claims to protect]
+Prior-coverage check:
+search patterns run (verbatim): [...]
+nearest existing test (file:line): [...]
+subsumes this test: yes/no (cite the assertions overlapped if yes)
 
-Value:
-[customer, operator, production, support, release, review, or developer-flow value]
+Protected behavior:
+[named concretely — generic descriptions are invalid]
+
+Audience and failure cost:
+[named audience: customer/operator/production/support/release/review/developer-flow; named failure cost]
 
 Signal strengths:
-[why it would fail for the meaningful regression]
+[each tied to the failure mechanism it would catch]
 
 False-confidence risks:
-[weak assertions, unrealistic setup, over-mocking, snapshots, flake risk, wrong feedback loop]
+[weak assertions, unrealistic setup, over-mocking, snapshots, flake risk, wrong feedback loop — each named individually]
 
-References used:
-[files that informed the decision]
+References cited:
+[file path → decision informed]
 
 Falsification check:
-[plausible bug and assertion/invariant that would fail]
+[named regression; assertion/invariant that would fail under it]
 
 Required action:
-[none for KEEP; exact redesign for REDO; removal reason for REMOVE]
+[none for KEEP; exact edit for REDO; removal reason citing the subsuming test or absent failure mode for REMOVE]
 ```
 
 ## doctor
@@ -330,18 +360,22 @@ Run a read-only test-suite health scan and report likely concerns with evidence.
 
 ```markdown
 ## Scope And Evidence
-[stack, frameworks, CI, test commands, files inspected, tests run/not run]
+stack: [language + frameworks + test runners]
+CI: [providers + job names]
+test commands inventoried (verbatim): [...]
+files inspected: [...]
+tests run / not run (with reason for not-run): [...]
 
 ## Overall
 Grade: [A-F or Low/Medium/High trust]
-Confidence: [low/medium/high with reason]
+Confidence: [low/medium/high with the evidence that grounds it]
 
 ## Top Concerns
 1. Severity: [P0-P3]
-   Concern: [...]
-   Evidence: [...]
-   Why it matters: [...]
-   Suggested action: [...]
+   Concern: [named]
+   Evidence (file:line + observed behavior): [...]
+   Why it matters (named audience + named failure cost): [...]
+   Required action (named change; not "consider X"): [...]
 
 ## Rubric
 Reliability: [...]

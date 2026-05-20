@@ -8,7 +8,7 @@ Map product behavior, customer value, code surfaces, dependencies, and risk sign
 
 | Use When | Avoid When |
 | --- | --- |
-| The behavior is not preselected and the agent must discover good test candidates. | A single behavior is already selected; use the relevant design reference directly. |
+| The behavior is not preselected and the agent must discover high-value test candidates against named risks. | A single behavior is already selected; use the relevant design reference directly. |
 | Existing tests are uneven, missing, or hard to relate to product risk. | There is no access to code, tests, docs, or runtime commands. |
 | A change touches multiple layers and needs a compact test plan. | The goal is broad suite audit; use suite health diagnostics. |
 
@@ -42,23 +42,26 @@ Map product behavior, customer value, code surfaces, dependencies, and risk sign
 - Counting coverage as confidence without inspecting assertions.
 - Ranking candidates by developer convenience while ignoring customer, revenue, trust, data, or support impact.
 - Ignoring existing commands, fixtures, and local test style.
+- Declaring a candidate "uncovered" after reading only production code. Existing tests often live in differently-named files (e.g. `e2e_<topic>.rs`, `<module>_efficacy.rs`) or under non-obvious names — a test of comparable scope may exist that production-code inspection won't surface. Always grep the test suite for the failure mode by entity name + state words + verbs before declaring a gap, and cite the nearest existing test plus the explicit difference that leaves this case uncovered.
+- Proposing a test for a hazard that no current caller can reach (e.g. "the type system allows this even though every production callsite resolves it safely"). Classify these as `structural-not-regression` and exclude unless forward-looking hazards were explicitly requested; otherwise the test protects a hypothetical future contributor, not shipped behavior.
 
 ## Output Guidance For Agents
 
-- For each candidate, include part to test, strategy, ROI, evidence, and confidence.
-- Explain ROI with customer/business impact, likelihood, confidence gap, and test cost.
-- Separate "high confidence from repo evidence" from inference.
-- Pick one best next test unless the user asked for a plan.
-- If writing a test, cite the selected candidate and keep the implementation focused.
+- For each candidate, include: part to test, strategy, ROI, **gap evidence** (search patterns + nearest existing test file:line + explicit difference), **risk evidence** (named audience + named failure mode), and confidence. "Evidence" without splitting these two is invalid output.
+- Explain ROI with customer/business impact, likelihood, confidence gap, and test cost — each named concretely, not labelled "high/medium/low" alone.
+- Mark each claim as "repo-grounded (cite file:line)" or "inference"; mixed claims must be split.
+- Recommend one best next test unless the user asked for a plan.
+- If writing a test, cite the selected candidate by name and keep the implementation focused on its named failure mode.
 
 ## Agent Checklist
 
-- Infer customer profile and product value from README, docs, routes, UI copy, pricing, examples, sales language, support/incident notes, and domain terms.
-- Inspect public surfaces: routes, commands, APIs, UI screens, jobs, events.
-- Inspect changed/important code: branches, boundaries, side effects, dependencies.
-- Inspect existing tests and CI commands.
-- Score candidates by impact, likelihood, confidence gap, and cost.
-- Choose the lowest level that preserves the risk.
+- Infer customer profile and product value from README, docs, routes, UI copy, pricing, examples, sales language, support/incident notes, and domain terms — cite the source line.
+- Inventory public surfaces: routes, commands, APIs, UI screens, jobs, events.
+- Inventory changed/important code: branches, boundaries, side effects, dependencies.
+- Inventory existing tests and CI commands. Record the test-suite paths and file-naming conventions for use in per-candidate gap-proof grep.
+- Per-candidate: grep the test suite for tests of comparable scope using entity + state + verb + failure-mode keywords. Cite the search patterns and the nearest existing test (file:line). Drop the candidate if a comparable test exists.
+- Score candidates by named impact, likelihood, confidence gap, and cost.
+- Choose the narrowest level that preserves the named failure mechanism.
 
 ## Source Anchors
 
